@@ -1,11 +1,7 @@
 package org.docksidestage.handson.exercise;
 
-import java.util.List;
-
 import javax.annotation.Resource;
-
 import org.docksidestage.handson.dbflute.exbhv.MemberBhv;
-import org.docksidestage.handson.dbflute.exentity.Member;
 import org.docksidestage.handson.unit.UnitContainerTestCase;
 
 public class HandsOn02Test extends UnitContainerTestCase {
