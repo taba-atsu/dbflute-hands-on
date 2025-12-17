@@ -7,6 +7,8 @@ import org.docksidestage.handson.dbflute.exbhv.MemberBhv;
 import org.docksidestage.handson.dbflute.exentity.Member;
 import org.docksidestage.handson.unit.UnitContainerTestCase;
 
+// #1on1: DBFluteの互換モードの話、フレームワークの互換運用 (2025/12/17)
+
 public class HandsOn02Test extends UnitContainerTestCase {
 
 	@Resource
