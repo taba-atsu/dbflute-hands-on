@@ -1,8 +1,10 @@
 package org.docksidestage.handson.exercise;
 
+import java.util.List;
 import javax.annotation.Resource;
 
 import org.dbflute.cbean.result.ListResultBean;
+import org.dbflute.optional.OptionalEntity;
 import org.docksidestage.handson.dbflute.exbhv.MemberBhv;
 import org.docksidestage.handson.dbflute.exentity.Member;
 import org.docksidestage.handson.unit.UnitContainerTestCase;
@@ -62,7 +64,7 @@ public class HandsOn02Test extends UnitContainerTestCase {
  +-----------+    (HTTP response)    +-----------------+        (data)       +-------+   |
  JavaScript               |                   ^    ^                                     |
  (HTML Template)          |                   |    |                                     |
-      ^                   +------------------/T\--/T\------------------------------------+ 
+      ^                   +------------------/T\--/T\------------------------------------+
       |                                       |    |
       |  (request)                            |    |
       |-------Ajax----------------------------+    |
@@ -85,9 +87,52 @@ public class HandsOn02Test extends UnitContainerTestCase {
 		// ## Assert ##
 		assertTrue(count > 0);
 	}
-	
+
 	// #1on1: マスターテーブルとは？ (2025/11/05)
 	// 広義のマスターと狭義のマスター。
 	// e.g. プロジェクト、データベース
+
+    public void test_memberName() throws Exception {
+        // ## Arrange ##
+
+        // ## Act ##
+        List<Member> memberList = memberBhv.selectList(cb ->{
+            cb.query().setMemberName_LikeSearch("S", op ->
+                    op.likePrefix());
+            cb.query().addOrderBy_MemberName_Asc();
+        });
+        // ## Assert ##
+        memberList.forEach(member -> {
+                    log("memberName: {}", member.getMemberName());
+                    assertTrue(member.getMemberName().startsWith("S"));
+        });
+    }
+
+    public void test_memberId() throws Exception {
+        // ## Arrange ##
+
+        // ## Act ##
+        OptionalEntity<Member> memberOpt = memberBhv.selectEntity(cb -> {
+            cb.query().setMemberId_Equal(1);
+        });
+        // ## Assert ##
+        Member member = memberOpt.get();
+        assertEquals(member.getMemberId(), Integer.valueOf(1));
+    }
+
+    public void test_memberBirthdate() throws Exception {
+        // ## Arrange ##
+
+        // ## Act ##
+        List<Member> memberList = memberBhv.selectList( cb -> {
+            cb.query().setBirthdate_IsNull();
+            cb.query().addOrderBy_UpdateDatetime_Desc();
+        });
+        // ## Assert ##
+        memberList.forEach( member -> {
+                    log("memberBirthdate: {}", member.getBirthdate());
+                    assertNull(member.getBirthdate());
+        });
+    }
 }
 // 自分でディレクトリをコマンドで作成したらパッケージの設定がうまくいかない。パッケージを作成してから、その中にファイルを作成するとうまく作成できた。
