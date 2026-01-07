@@ -102,7 +102,15 @@ public class HandsOn02Test extends UnitContainerTestCase {
             cb.query().addOrderBy_MemberName_Asc();
         });
         // ## Assert ##
+        // TODO tabata もし検索が0件のとき、ループが素通りしてアサートが動かずgreenになってしまうので... by jflute (2026/01/07)
+        // テストデータが0件の時の話とか、検索条件がバグって0件とか、そういうも検知したい
+        // なので、memberListが最低限1件はあるよね、ってのをアサートしたい。
+        //  e.g. assertFalse(memberList.isEmpty());
+        // もうハンズオンでは専用メソッドを用意しているので、assH 補完でOK。これ使ってくださいませ。
+        //  e.g. assertHasAnyElement(memberList);
         memberList.forEach(member -> {
+                	// TODO tabata getMemberName()を2回呼び出しているので...些細なことですが、変数抽出してみましょう by jflute (2026/01/07)
+                    // IntelliJでサクッとできるはずなので、やってみてください。(control+T でリファクタリングメニュー)
                     log("memberName: {}", member.getMemberName());
                     assertTrue(member.getMemberName().startsWith("S"));
         });
@@ -110,13 +118,22 @@ public class HandsOn02Test extends UnitContainerTestCase {
 
     public void test_memberId() throws Exception {
         // ## Arrange ##
+    	// TODO jflute 次回1on1にて、Optionalの話、javatryのstep8と連動 (2026/01/07)
 
         // ## Act ##
+    	// TODO tabata OptionalEntityの変数、DBFluteのスタイルに合わせてもらえたらと by jflute (2026/01/07)
+    	// https://dbflute.seasar.org/ja/manual/function/ormapper/behavior/select/selectentity.html#optionalname
         OptionalEntity<Member> memberOpt = memberBhv.selectEntity(cb -> {
             cb.query().setMemberId_Equal(1);
         });
         // ## Assert ##
+        // #1on1: 問答無用get()は意図しているか？(たばたさんsaid:たぶんifの書き忘れ?) (2026/01/07)
+        // でも、ここはget()でOK。テストなので1番が存在しなかったら論外なので落ちていい場面だから。
+        // ifを書くってことは「なかった場合の処理」を書く必要があるということになるけど、ここではその必要ない。
+        // というように、常にifを意識しないといけないわけではなく、落ちてもいいやってときは問答無用でもOK。
+        // (厳密には、デバッグのしやすさとかもあるのでもうちょい複雑にはなるが、それはOptionalの話のときに一緒に)
         Member member = memberOpt.get();
+        // TODO tabata "expected:<2> but was:<1>", 期待値が逆 by jflute (2026/01/07)
         assertEquals(member.getMemberId(), Integer.valueOf(1));
     }
 
@@ -124,6 +141,7 @@ public class HandsOn02Test extends UnitContainerTestCase {
         // ## Arrange ##
 
         // ## Act ##
+    	// TODO tabata cbの左に空白空いてる "( cb" by jflute (2026/01/07)
         List<Member> memberList = memberBhv.selectList( cb -> {
             cb.query().setBirthdate_IsNull();
             cb.query().addOrderBy_UpdateDatetime_Desc();
