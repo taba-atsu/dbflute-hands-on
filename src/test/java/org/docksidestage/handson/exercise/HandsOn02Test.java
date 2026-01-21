@@ -11,6 +11,7 @@ import org.docksidestage.handson.unit.UnitContainerTestCase;
 
 // #1on1: DBFluteの互換モードの話、フレームワークの互換運用 (2025/12/17)
 
+// TODO tabata javadocお願いします by jflute (2026/01/21)
 public class HandsOn02Test extends UnitContainerTestCase {
 
 	@Resource
@@ -102,7 +103,7 @@ public class HandsOn02Test extends UnitContainerTestCase {
             cb.query().addOrderBy_MemberName_Asc();
         });
         // ## Assert ##
-        // TODO done tabata もし検索が0件のとき、ループが素通りしてアサートが動かずgreenになってしまうので... by jflute (2026/01/07)
+        // done tabata もし検索が0件のとき、ループが素通りしてアサートが動かずgreenになってしまうので... by jflute (2026/01/07)
         // テストデータが0件の時の話とか、検索条件がバグって0件とか、そういうも検知したい
         // なので、memberListが最低限1件はあるよね、ってのをアサートしたい。
         //  e.g. assertFalse(memberList.isEmpty());
@@ -110,8 +111,8 @@ public class HandsOn02Test extends UnitContainerTestCase {
         //  e.g. assertHasAnyElement(memberList);
         assertHasAnyElement(memberList);
         memberList.forEach(member -> {
-                	// TODO done tabata getMemberName()を2回呼び出しているので...些細なことですが、変数抽出してみましょう by jflute (2026/01/07)
-                    // IntelliJでサクッとできるはずなので、やってみてください。(control+T でリファクタリングメニュー)
+        	// done tabata getMemberName()を2回呼び出しているので...些細なことですが、変数抽出してみましょう by jflute (2026/01/07)
+            // IntelliJでサクッとできるはずなので、やってみてください。(control+T でリファクタリングメニュー)
             String memberName = member.getMemberName();
             log("memberName: {}", memberName);
                     assertTrue(memberName.startsWith("S"));
@@ -123,7 +124,7 @@ public class HandsOn02Test extends UnitContainerTestCase {
     	// TODO jflute 次回1on1にて、Optionalの話、javatryのstep8と連動 (2026/01/07)
 
         // ## Act ##
-    	// TODO done tabata OptionalEntityの変数、DBFluteのスタイルに合わせてもらえたらと by jflute (2026/01/07)
+    	// done tabata OptionalEntityの変数、DBFluteのスタイルに合わせてもらえたらと by jflute (2026/01/07)
     	// https://dbflute.seasar.org/ja/manual/function/ormapper/behavior/select/selectentity.html#optionalname
         OptionalEntity<Member> optMember = memberBhv.selectEntity(cb -> {
             cb.query().setMemberId_Equal(1);
@@ -135,7 +136,8 @@ public class HandsOn02Test extends UnitContainerTestCase {
         // というように、常にifを意識しないといけないわけではなく、落ちてもいいやってときは問答無用でもOK。
         // (厳密には、デバッグのしやすさとかもあるのでもうちょい複雑にはなるが、それはOptionalの話のときに一緒に)
         Member member = optMember.get();
-        // TODO tabata "expected:<2> but was:<1>", 期待値が逆 by jflute (2026/01/07)
+        // done tabata "expected:<2> but was:<1>", 期待値が逆 by jflute (2026/01/07)
+        // TODO tabata 期待値の方、intそのままを指定しても大丈夫です (UTFluteならでは) by jflute (2026/01/21)
         assertEquals(Integer.valueOf(1), member.getMemberId());
     }
 
@@ -143,12 +145,19 @@ public class HandsOn02Test extends UnitContainerTestCase {
         // ## Arrange ##
 
         // ## Act ##
-    	// TODO done tabata cbの左に空白空いてる "( cb" by jflute (2026/01/07)
+    	// done tabata cbの左に空白空いてる "( cb" by jflute (2026/01/07)
         List<Member> memberList = memberBhv.selectList(cb -> {
             cb.query().setBirthdate_IsNull();
             cb.query().addOrderBy_UpdateDatetime_Desc();
         });
         // ## Assert ##
+        // TODO tabata めちゃすぐしたで同じ "( member" by jflute (2026/01/21)
+        // (これ自体何か直接問題になるわけじゃないですが、ソースコード全体を整える意識の積み重ねの一つとして)
+        // (こういう小さなところも気を遣えるからこそ、本当に重要な見栄えにも気を遣えるようになる)
+        // TODO tabata こっちも変数の抽出 by jflute (2026/01/21)
+        // ("指摘されたら、似たようなところが他にもないか探す" 習慣を)
+        // (本番でもバグでトラブルが起きたとして、他でも似たことやってないかな？って探して追加トラブルを未然に防ぐ)
+        // (その思考の習慣を付けたい)
         memberList.forEach( member -> {
                     log("memberBirthdate: {}", member.getBirthdate());
                     assertNull(member.getBirthdate());
