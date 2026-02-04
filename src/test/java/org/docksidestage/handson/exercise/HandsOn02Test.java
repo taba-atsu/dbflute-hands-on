@@ -12,7 +12,7 @@ import org.docksidestage.handson.unit.UnitContainerTestCase;
 
 // #1on1: DBFluteの互換モードの話、フレームワークの互換運用 (2025/12/17)
 
-// TODO done tabata javadocお願いします by jflute (2026/01/21)
+// done tabata javadocお願いします by jflute (2026/01/21)
 /**
  * ハンズオンセクション2
  * @author taba-atsu
@@ -126,7 +126,7 @@ public class HandsOn02Test extends UnitContainerTestCase {
 
     public void test_memberId() throws Exception {
         // ## Arrange ##
-    	// TODO jflute 次回1on1にて、Optionalの話、javatryのstep8と連動 (2026/01/07)
+    	// done jflute 次回1on1にて、Optionalの話、javatryのstep8と連動 (2026/01/07)
 
         // ## Act ##
     	// done tabata OptionalEntityの変数、DBFluteのスタイルに合わせてもらえたらと by jflute (2026/01/07)
@@ -142,8 +142,22 @@ public class HandsOn02Test extends UnitContainerTestCase {
         // (厳密には、デバッグのしやすさとかもあるのでもうちょい複雑にはなるが、それはOptionalの話のときに一緒に)
         Member member = optMember.get();
         // done tabata "expected:<2> but was:<1>", 期待値が逆 by jflute (2026/01/07)
-        // TODO done tabata 期待値の方、intそのままを指定しても大丈夫です (UTFluteならでは) by jflute (2026/01/21)
+        // done tabata 期待値の方、intそのままを指定しても大丈夫です (UTFluteならでは) by jflute (2026/01/21)
         assertEquals(1, member.getMemberId());
+        // #1on1: アサートライブラリ色々話 (2026/02/04)
+        // JUnitの標準(バージョンによって違う)、AssertJ, Kotest など。
+        
+        // #1on1: alwaysPresent()の紹介
+        //optMember.alwaysPresent(member -> { // get()と同じ例外が発生する (DBFluteの例外なのでリッチ)
+        //    assertEquals(1, member.getMemberId());
+        //});
+        // コールバックでmemberをハンドリングしたいのか？ → alwaysPresent()
+        // フラットな変数としてハンドリングしたいのか？ → get(), orElseThrow(引数なし)
+        //
+        // DBFluteとしては、alwaysPresent()わりかしオススメ。(場面に合うのであれば)
+        // もう、短いスコープで消化しておしまいの場合。変数の無駄な長生きもしなくなる。
+        // (そうすることで、外側の変数スコープの世界が綺麗に保たれる)
+        // あと、名前がフィットする。「常に存在する (万が一しなかったら例外で落ちて良い)」が伝わりやすい。
     }
 
     public void test_memberBirthdate() throws Exception {
@@ -156,14 +170,19 @@ public class HandsOn02Test extends UnitContainerTestCase {
             cb.query().addOrderBy_UpdateDatetime_Desc();
         });
         // ## Assert ##
-        // TODO done tabata めちゃすぐしたで同じ "( member" by jflute (2026/01/21)
+        // done tabata めちゃすぐしたで同じ "( member" by jflute (2026/01/21)
         // (これ自体何か直接問題になるわけじゃないですが、ソースコード全体を整える意識の積み重ねの一つとして)
         // (こういう小さなところも気を遣えるからこそ、本当に重要な見栄えにも気を遣えるようになる)
-        // TODO done tabata こっちも変数の抽出 by jflute (2026/01/21)
+        // done tabata こっちも変数の抽出 by jflute (2026/01/21)
         // ("指摘されたら、似たようなところが他にもないか探す" 習慣を)
         // (本番でもバグでトラブルが起きたとして、他でも似たことやってないかな？って探して追加トラブルを未然に防ぐ)
         // (その思考の習慣を付けたい)
         memberList.forEach(member -> {
+        	// TODO tabata memberBirthdate は birthdate で十分 by jflute (2026/02/04)
+        	// 他で紛れるような単語ではないので。(idとかnameとかだったら頻出するからmemberXxxってしたいけど)
+        	// IntelliJのrenameのショートカット使ってやってみましょう。
+        	// よもやま: AIによるリファクタリングの話、自分がやった方が早い？お願いした方が早い？
+        	// AIにお願いするとしたら、クラス全体で変数名を調整した方が良いところを提案/修正お願いみたいな。
             LocalDate memberBirthdate = member.getBirthdate();
             log("memberBirthdate: {}", memberBirthdate);
             assertNull(memberBirthdate);
