@@ -1,5 +1,6 @@
 package org.docksidestage.handson.exercise;
 
+import java.time.LocalDate;
 import java.util.List;
 import javax.annotation.Resource;
 
@@ -11,7 +12,11 @@ import org.docksidestage.handson.unit.UnitContainerTestCase;
 
 // #1on1: DBFluteの互換モードの話、フレームワークの互換運用 (2025/12/17)
 
-// TODO tabata javadocお願いします by jflute (2026/01/21)
+// TODO done tabata javadocお願いします by jflute (2026/01/21)
+/**
+ * ハンズオンセクション2
+ * @author taba-atsu
+ */
 public class HandsOn02Test extends UnitContainerTestCase {
 
 	@Resource
@@ -137,8 +142,8 @@ public class HandsOn02Test extends UnitContainerTestCase {
         // (厳密には、デバッグのしやすさとかもあるのでもうちょい複雑にはなるが、それはOptionalの話のときに一緒に)
         Member member = optMember.get();
         // done tabata "expected:<2> but was:<1>", 期待値が逆 by jflute (2026/01/07)
-        // TODO tabata 期待値の方、intそのままを指定しても大丈夫です (UTFluteならでは) by jflute (2026/01/21)
-        assertEquals(Integer.valueOf(1), member.getMemberId());
+        // TODO done tabata 期待値の方、intそのままを指定しても大丈夫です (UTFluteならでは) by jflute (2026/01/21)
+        assertEquals(1, member.getMemberId());
     }
 
     public void test_memberBirthdate() throws Exception {
@@ -151,16 +156,17 @@ public class HandsOn02Test extends UnitContainerTestCase {
             cb.query().addOrderBy_UpdateDatetime_Desc();
         });
         // ## Assert ##
-        // TODO tabata めちゃすぐしたで同じ "( member" by jflute (2026/01/21)
+        // TODO done tabata めちゃすぐしたで同じ "( member" by jflute (2026/01/21)
         // (これ自体何か直接問題になるわけじゃないですが、ソースコード全体を整える意識の積み重ねの一つとして)
         // (こういう小さなところも気を遣えるからこそ、本当に重要な見栄えにも気を遣えるようになる)
-        // TODO tabata こっちも変数の抽出 by jflute (2026/01/21)
+        // TODO done tabata こっちも変数の抽出 by jflute (2026/01/21)
         // ("指摘されたら、似たようなところが他にもないか探す" 習慣を)
         // (本番でもバグでトラブルが起きたとして、他でも似たことやってないかな？って探して追加トラブルを未然に防ぐ)
         // (その思考の習慣を付けたい)
-        memberList.forEach( member -> {
-                    log("memberBirthdate: {}", member.getBirthdate());
-                    assertNull(member.getBirthdate());
+        memberList.forEach(member -> {
+            LocalDate memberBirthdate = member.getBirthdate();
+            log("memberBirthdate: {}", memberBirthdate);
+            assertNull(memberBirthdate);
         });
     }
 }
