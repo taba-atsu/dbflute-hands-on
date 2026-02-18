@@ -178,14 +178,14 @@ public class HandsOn02Test extends UnitContainerTestCase {
         // (本番でもバグでトラブルが起きたとして、他でも似たことやってないかな？って探して追加トラブルを未然に防ぐ)
         // (その思考の習慣を付けたい)
         memberList.forEach(member -> {
-        	// TODO tabata memberBirthdate は birthdate で十分 by jflute (2026/02/04)
+        	// TODO done tabata memberBirthdate は birthdate で十分 by jflute (2026/02/04)
         	// 他で紛れるような単語ではないので。(idとかnameとかだったら頻出するからmemberXxxってしたいけど)
         	// IntelliJのrenameのショートカット使ってやってみましょう。
         	// よもやま: AIによるリファクタリングの話、自分がやった方が早い？お願いした方が早い？
         	// AIにお願いするとしたら、クラス全体で変数名を調整した方が良いところを提案/修正お願いみたいな。
-            LocalDate memberBirthdate = member.getBirthdate();
-            log("memberBirthdate: {}", memberBirthdate);
-            assertNull(memberBirthdate);
+            LocalDate birthdate = member.getBirthdate();
+            log("memberBirthdate: {}", birthdate);
+            assertNull(birthdate);
         });
     }
 }
