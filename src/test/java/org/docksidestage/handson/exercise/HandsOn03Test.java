@@ -15,15 +15,16 @@ import org.docksidestage.handson.dbflute.exentity.MemberStatus;
 import org.docksidestage.handson.dbflute.exbhv.MemberSecurityBhv;
 import org.docksidestage.handson.unit.UnitContainerTestCase;
 
-// TODO tabata javadocの場所がズレてる by jflute (2026/04/30)
+/**
+ * ハンズオンセクション3
+ * @author taba-atsu
+ */
+// TODO done tabata javadocの場所がズレてる by jflute (2026/04/30)
 public class HandsOn03Test extends UnitContainerTestCase {
-	/**
-	 * ハンズオンセクション3
-	 * @author taba-atsu
-	 */
 
     @Resource
     private MemberBhv memberBhv;
+    @Resource
     private MemberSecurityBhv memberSecurityBhv;
     
     public void test_member_start_with_s_and_before_birth_19680101() throws Exception {
@@ -74,7 +75,7 @@ public class HandsOn03Test extends UnitContainerTestCase {
         // ## Assert ##
         memberList.forEach(member -> {
             log("birthdate={}, memberId={}", member.getBirthdate(), member.getMemberId());
-            // TODO tabata assertNotNull()が実質的に働いていない。でもチェックはできてる。 by jflute (2026/04/30)
+            // TODO done tabata assertNotNull()が実質的に働いていない。でもチェックはできてる。 by jflute (2026/04/30)
             // 実際、データがなかった場合、get() で NonSetupSelectRelationAccessException
             // なので、assertNotNull()まで到達していない。
             // (ちなみに、Optionalのget()は絶対にnullを戻さないメソッド)
@@ -92,8 +93,8 @@ public class HandsOn03Test extends UnitContainerTestCase {
             // 要は、Optionalで戻ってくるということは、nullをチェックしても意味がない。
             // Optionalのpresent/emptyをチェックしないと。
             //
-			assertNotNull(member.getMemberStatus().get());
-            assertNotNull(member.getMemberSecurityAsOne().get());
+            assertTrue(member.getMemberStatus().isPresent());
+            assertTrue(member.getMemberSecurityAsOne().isPresent());
 
             // TODO jflute 1on1にて、カージナリティの話 (2026/04/30)
             // #1on1: カージナリティってなんですか？ (2026/04/30)
@@ -102,13 +103,18 @@ public class HandsOn03Test extends UnitContainerTestCase {
             // B. カラムのカージナリティ (値の種類数)
             // 今回は "A" のカージナリティ。
 
-            // TODO tabata すべての会員が会員ステータスが存在すること前提の実装ですが... by jflute (2026/04/30)
+            // TODO done tabata すべての会員が会員ステータスが存在すること前提の実装ですが... by jflute (2026/04/30)
             // それって物理的に何か保証されているのでしょうか？ (存在すること前提は合っている)
             // (会員ステータスが見つからない会員はいない理由は？)
+            // 会員ステータスコードのカラムはスキーマでNOT NULLになっており、なにかしらの値が入ることが保証されている。
+            // さらにそのカラムに対して外部キー制約があるので、全ての会員に対して実在するstatusが存在することが保証される。
+            // NOT NULLで値があることを保証し、FKで参照先を保証している。
             
-            // TODO tabata すべての会員が会員セキュリティが存在すること前提の実装ですが... by jflute (2026/04/30)
+            // TODO done tabata すべての会員が会員セキュリティが存在すること前提の実装ですが... by jflute (2026/04/30)
             // それって物理的に何か保証されているのでしょうか？ (存在すること前提は合っている)
             // (会員セキュリティが見つからない会員はいない理由は？)
+            // security レコード から見て、対応する member が必ず存在するは保証されているが、security → member の方向ではDBのレイヤーで物理的に保証されていない。
+            // 今回はテーブルのコメントと、テストデータ投入の際に担保している？
         });
     }
     
@@ -150,8 +156,8 @@ public class HandsOn03Test extends UnitContainerTestCase {
         // 「memberListに対応するセキュリティたちを取っている」がわかれば、そこから先に進める。
         // この思考のプロセスが大事。
         
-        // TODO tabata 対応するセキュリティたちを使って、もういっこn+1を回避したアサートを書いてみましょう by jflute (2026/04/30)
-        memberSecurityBhv.selectList(cb -> {
+        // TODO done tabata 対応するセキュリティたちを使って、もういっこn+1を回避したアサートを書いてみましょう by jflute (2026/04/30)
+        // memberSecurityBhv.selectList(cb -> {
 			// memberListに対応する、って条件
         	// memberListからIDをリストで抽出するメソッドを使いたい by たばたさん
         	// まずは、かっこいいやり方は飛ばして、ベタなやり方を考える。
@@ -167,9 +173,24 @@ public class HandsOn03Test extends UnitContainerTestCase {
         	// #1on1: まずベタなやり方を考える。ベタなやり方でその本質を把握する。 (2026/04/30)
         	// (ベタなやり方で提出はしないけど、本質把握のために考える)
         	
-        	// TODO tabata Stream API でやる実装は自分でやってみましょう by jflute (2026/04/30)
+        	// TODO done tabata Stream API でやる実装は自分でやってみましょう by jflute (2026/04/30)
         	//cb.query().setMemberId_InScope(memberIdList);
-		});
+
+		// });
+
+        List<Integer> memberIdList = memberList.stream()
+                .map(member -> member.getMemberId())
+                .collect(Collectors.toList());
+        List<MemberSecurity> securityList = memberSecurityBhv.selectList(cb -> {
+            cb.query().setMemberId_InScope(memberIdList);
+        });
+
+        assertHasAnyElement(securityList);
+        securityList.forEach(security -> {
+            log("memberId={}, answer={}", security.getMemberId(), security.getReminderQuestion());
+            assertContains(security.getReminderQuestion(), "2");
+        });
+
     }
     
     public void test_member_status_order() throws Exception {
