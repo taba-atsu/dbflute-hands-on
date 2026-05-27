@@ -2,7 +2,9 @@ package org.docksidestage.handson.exercise;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -13,6 +15,8 @@ import org.docksidestage.handson.dbflute.exentity.Member;
 import org.docksidestage.handson.dbflute.exentity.MemberSecurity;
 import org.docksidestage.handson.dbflute.exentity.MemberStatus;
 import org.docksidestage.handson.dbflute.exbhv.MemberSecurityBhv;
+import org.docksidestage.handson.dbflute.exbhv.PurchaseBhv;
+import org.docksidestage.handson.dbflute.exentity.Purchase;
 import org.docksidestage.handson.unit.UnitContainerTestCase;
 
 /**
@@ -26,7 +30,9 @@ public class HandsOn03Test extends UnitContainerTestCase {
     private MemberBhv memberBhv;
     @Resource
     private MemberSecurityBhv memberSecurityBhv;
-    
+    @Resource
+    private PurchaseBhv purchaseBhv;
+
     public void test_member_start_with_s_and_before_birth_19680101() throws Exception {
         // ## Arrange ##
     	LocalDate targetDate = LocalDate.of(1968,1,1);
@@ -233,9 +239,51 @@ public class HandsOn03Test extends UnitContainerTestCase {
         });
     
         // ## Assert ##
-//        memberList.forEach(member -> {
-//            log("memberId={}, displayOrder={}",member.getMemberId(),);
-//            assertNull(member.getMemberStatus());
-//        });
+        assertHasAnyElement(memberList);
+        Set<String> existingStatusCode = new HashSet<>();
+        String previousStatusCode = null;
+        for (Member member : memberList) {
+            String statusCode = member.getMemberStatusCode();
+            log("memberId={}, statusCode={}", member.getMemberId(), statusCode);
+
+            assertFalse(member.getMemberStatus().isPresent());
+
+            if (!statusCode.equals(previousStatusCode)) {
+                assertFalse(existingStatusCode.contains(statusCode));
+                existingStatusCode.add(statusCode);
+                previousStatusCode = statusCode;
+            }
+        }
+        // 固まって並んでいるところに関して、同じステータスコードの会員が連続した1ブロックに並んでること。
+        // なので、ループを回してコードが前と変わった瞬間に出てきたコードが、既出のものではないかを検知する方針にした
     }
+
+    public void test_purchase_of_member_having_birthdate() throws Exception {
+        // ## Arrange ##
+
+        // ## Act ##
+        List<Purchase> purchaseList = purchaseBhv.selectList(cb -> {
+            cb.setupSelect_Member().withMemberStatus();
+            cb.setupSelect_Product();
+            cb.query().queryMember().setBirthdate_IsNotNull();
+            cb.query().addOrderBy_PurchaseDatetime_Desc();
+            cb.query().addOrderBy_PurchasePrice_Desc();
+            cb.query().addOrderBy_ProductId_Asc();
+            cb.query().addOrderBy_MemberId_Asc();
+        });
+
+        // ## Assert ##
+        assertHasAnyElement(purchaseList);
+        purchaseList.forEach(purchase -> {
+            Member member = purchase.getMember().get();
+            String memberName = member.getMemberName();
+            String memberStatusName = member.getMemberStatus().get().getMemberStatusName();
+            String productName = purchase.getProduct().get().getProductName();
+            log("memberName={}, memberStatusName={}, productName={}", memberName, memberStatusName, productName);
+
+            assertNotNull(member.getBirthdate());
+        });
+    }
+
+
 }
