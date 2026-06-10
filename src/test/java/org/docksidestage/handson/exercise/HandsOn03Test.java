@@ -268,7 +268,7 @@ public class HandsOn03Test extends UnitContainerTestCase {
 
             if (!currentStatusCode.equals(previousStatusCode)) {
                 assertFalse(existingStatusCodes.contains(currentStatusCode));
-                // TODO done tabata ifの中じゃなくてもいいものは、ifの外に出した方が読み手の負担が少ない by jflute (2026/05/27)
+                // done tabata ifの中じゃなくてもいいものは、ifの外に出した方が読み手の負担が少ない by jflute (2026/05/27)
                 // せっかくSetなので、とにかく既出ということで突っ込んで、重複弾きはSetにお任せでも良い。
                 // 現状、重複弾きを自力でやってるので、厳密にはListでも重複が発生しない。Setの機能を使ってないとも言える。
                 // previousの解釈、塊の1個前なのか？ループの1個前なのか？後者にしても良い。AABBCC
@@ -300,6 +300,24 @@ public class HandsOn03Test extends UnitContainerTestCase {
     	// #1on1: 基点テーブルを間違えてないの素晴らしい (2026/05/27)
     	// 要件の日本語の解釈大事。助詞が大事。
     	// DBFluteは基点テーブルを重視している。そこの第一歩を間違えなこと。
+    	//
+    	// #1on1: 基点テーブルが定まらない検索のお話 (2026/06/10)
+    	// まず外だしSQLの話から。現場の外だしSQL。
+    	// アプリのSQLは、動的なSQL。ifが必要。
+    	// ifのジレンマ、変数のジレンマ、2WaySQLはどちらもSQLコメント解決。
+    	// 2WaySQLのポテンシャルをDBFluteがさらに引き出す。
+    	// o 25, outside-sql-test (renewalタスクでも実行される)
+    	// o 24, sql2entity (実行してSQLのメタデータを取って自動生成する)
+    	// DBFluteの外だしSQLは、SQLなのにDB変更に強い！
+    	//
+    	// 基点テーブルが定まらない検索。
+    	// e.g. 月ごとの購入状況の集計
+    	// e.g. 会員と月ごとの購入状況の集計
+    	//
+    	// 知らないSQLを読むときのコツの一つでもある。
+    	// まず、「結果セットのユニーク性、つまり、基点テーブル」が何のか見る。
+    	// → ビジネスサイドのSQLをレビューする仕事とつながる by たばたさん
+    	//
         List<Purchase> purchaseList = purchaseBhv.selectList(cb -> {
             cb.setupSelect_Member().withMemberStatus();
             cb.setupSelect_Product();
