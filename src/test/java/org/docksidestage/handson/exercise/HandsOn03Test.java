@@ -254,27 +254,27 @@ public class HandsOn03Test extends UnitContainerTestCase {
     
         // ## Assert ##
         assertHasAnyElement(memberList);
-        // TODO tabata 複数のものを入れるオブジェクトなので、変数名もなんか複数を示したい by jflute (2026/05/27)
+        // TODO done tabata 複数のものを入れるオブジェクトなので、変数名もなんか複数を示したい by jflute (2026/05/27)
         //  e.g. existingStatusCodes, existingStatusCodeSet
-        Set<String> existingStatusCode = new HashSet<>();
+        Set<String> existingStatusCodes = new HashSet<>();
         String previousStatusCode = null;
         for (Member member : memberList) {
-        	// TODO tabata 必ずってわけじゃないけど、currentを付けたいかも by jflute (2026/05/27)
+        	// TODO done tabata 必ずってわけじゃないけど、currentを付けたいかも by jflute (2026/05/27)
         	// currentとpreviousでおもっきり比較しているので、その区別を明確にした方が直感的かなと。
-            String statusCode = member.getMemberStatusCode();
-            log("memberId={}, statusCode={}", member.getMemberId(), statusCode);
+            String currentStatusCode = member.getMemberStatusCode();
+            log("memberId={}, currentStatusCode={}", member.getMemberId(), currentStatusCode);
 
             assertFalse(member.getMemberStatus().isPresent());
 
-            if (!statusCode.equals(previousStatusCode)) {
-                assertFalse(existingStatusCode.contains(statusCode));
-                // TODO tabata ifの中じゃなくてもいいものは、ifの外に出した方が読み手の負担が少ない by jflute (2026/05/27)
+            if (!currentStatusCode.equals(previousStatusCode)) {
+                assertFalse(existingStatusCodes.contains(currentStatusCode));
+                // TODO done tabata ifの中じゃなくてもいいものは、ifの外に出した方が読み手の負担が少ない by jflute (2026/05/27)
                 // せっかくSetなので、とにかく既出ということで突っ込んで、重複弾きはSetにお任せでも良い。
                 // 現状、重複弾きを自力でやってるので、厳密にはListでも重複が発生しない。Setの機能を使ってないとも言える。
                 // previousの解釈、塊の1個前なのか？ループの1個前なのか？後者にしても良い。AABBCC
-                existingStatusCode.add(statusCode);
-                previousStatusCode = statusCode;
             }
+            existingStatusCodes.add(currentStatusCode);
+            previousStatusCode = currentStatusCode;
         }
         // #1on1: わかりやすい日本語↓素晴らしい (2026/05/27)
         // 固まって並んでいるところに関して、同じステータスコードの会員が連続した1ブロックに並んでること。
@@ -322,6 +322,13 @@ public class HandsOn03Test extends UnitContainerTestCase {
             assertNotNull(member.getBirthdate());
         });
     }
-
-
+    
+    public void test_member_formalized_from_20051001_to_20051003() throws Exception {
+        // ## Arrange ##
+        
+        
+        // ## Act ##
+    
+        // ## Assert ##
+    }
 }
