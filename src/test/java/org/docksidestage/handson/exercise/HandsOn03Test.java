@@ -27,7 +27,7 @@ import org.docksidestage.handson.unit.UnitContainerTestCase;
  * ハンズオンセクション3
  * @author taba-atsu
  */
-// TODO done tabata javadocの場所がズレてる by jflute (2026/04/30)
+// done tabata javadocの場所がズレてる by jflute (2026/04/30)
 public class HandsOn03Test extends UnitContainerTestCase {
 
     @Resource
@@ -85,7 +85,7 @@ public class HandsOn03Test extends UnitContainerTestCase {
         // ## Assert ##
         memberList.forEach(member -> {
             log("birthdate={}, memberId={}", member.getBirthdate(), member.getMemberId());
-            // TODO done tabata assertNotNull()が実質的に働いていない。でもチェックはできてる。 by jflute (2026/04/30)
+            // done tabata assertNotNull()が実質的に働いていない。でもチェックはできてる。 by jflute (2026/04/30)
             // 実際、データがなかった場合、get() で NonSetupSelectRelationAccessException
             // なので、assertNotNull()まで到達していない。
             // (ちなみに、Optionalのget()は絶対にnullを戻さないメソッド)
@@ -258,12 +258,12 @@ public class HandsOn03Test extends UnitContainerTestCase {
     
         // ## Assert ##
         assertHasAnyElement(memberList);
-        // TODO done tabata 複数のものを入れるオブジェクトなので、変数名もなんか複数を示したい by jflute (2026/05/27)
+        // done tabata 複数のものを入れるオブジェクトなので、変数名もなんか複数を示したい by jflute (2026/05/27)
         //  e.g. existingStatusCodes, existingStatusCodeSet
         Set<String> existingStatusCodes = new HashSet<>();
         String previousStatusCode = null;
         for (Member member : memberList) {
-        	// TODO done tabata 必ずってわけじゃないけど、currentを付けたいかも by jflute (2026/05/27)
+        	// done tabata 必ずってわけじゃないけど、currentを付けたいかも by jflute (2026/05/27)
         	// currentとpreviousでおもっきり比較しているので、その区別を明確にした方が直感的かなと。
             String currentStatusCode = member.getMemberStatusCode();
             log("memberId={}, currentStatusCode={}", member.getMemberId(), currentStatusCode);
@@ -354,9 +354,13 @@ public class HandsOn03Test extends UnitContainerTestCase {
 
         // ## Act ##
         List<Member> memberList = memberBhv.selectList(cb -> {
+        	// #1on1: SpecifyColumn のお話 (2026/06/24)
+        	// テーブルは取捨選択だけど、カラムはある程度許容する。(がデフォルト)
+        	// でも、あまりに重いカラムがある場合は、SpecifyColumn で取捨選択できるよ。
             cb.setupSelect_MemberStatus();
             cb.specify().specifyMemberStatus().columnMemberStatusName();
             cb.query().setMemberName_LikeSearch("vi", op -> op.likeContain());
+            // #1on1: DateFromTo のお話 (2026/06/24)
             cb.query().setFormalizedDatetime_FromTo(fromDateTime, toDateTime, op -> op.compareAsDate());
             cb.query().addOrderBy_FormalizedDatetime_Asc();
             cb.query().addOrderBy_MemberId_Asc();
@@ -379,6 +383,10 @@ public class HandsOn03Test extends UnitContainerTestCase {
             assertException(NonSpecifiedColumnAccessException.class, () -> status.getDisplayOrder());
 
             LocalDate formalizedDate = formalizedDatetime.toLocalDate();
+            // TODO tabata ループ外で固定の値を毎ループ変換すると、変換コストがn倍になる by jflute (2026/06/24)
+            // UnitTestなので許容できるし、些細なコストですが、トレーニングとして意識しておきましょう。
+            // (補足: 実際のコストは、LocalDateTimeの場合は、内部のLocalDateを戻すだけなのでほぼコストないけど)
+            // かつ、読み手が「毎回変換してるから、fromDateTimeはループ内変数なんだろうか？」って一瞬思っちゃう。
             assertFalse(formalizedDate.isBefore(fromDateTime.toLocalDate()));
             assertFalse(formalizedDate.isAfter(toDateTime.toLocalDate()));
         });
@@ -386,13 +394,32 @@ public class HandsOn03Test extends UnitContainerTestCase {
     
     public void test_purchase_within_one_week_after_formalized() throws Exception {
         // ## Arrange ##
+    	// #1on1: adjust...を一緒に (2026/06/24)
+        //
+        // 10/3                    10/10     10/11
+        //  13h                      0h  13h   0h
+        //   |                       |    |    |
+        //   |       D               | I  |    | P
+        // A |                       |H  J|L   |O
+        //   |C                  E   G    K    N
+        //   B                      F|    |   M|
+        //   |                       |         |
+        //
+    	// moveToDayTerminal()で、Mになるので、現時点のロジックではヒットしない。
+    	// 一週間以内という条件の曖昧さを知ることがポイント。
+    	// サービスの特徴によって条件が変わることもある。
+    	adjustPurchase_PurchaseDatetime_fromFormalizedDatetimeInWeek();
 
         // ## Act ##
         List<Purchase> purchaseList = purchaseBhv.selectList(cb -> {
             cb.setupSelect_Member().withMemberStatus();
             cb.setupSelect_Member().withMemberSecurityAsOne();
             cb.setupSelect_Product().withProductStatus();
+            // #1on1: 自己参照FKのお話 (2026/06/24)
             cb.setupSelect_Product().withProductCategory().withProductCategorySelf();
+
+            // #1on1: カラム対カラムの絞り込み条件 (2026/06/24)
+            // ConditionBeanの機能の探し方の基本の話。
 
             // 正式会員になってから一週間以内の購入
             // 購入日時 >= 正式会員日時 (なってから)
@@ -400,8 +427,10 @@ public class HandsOn03Test extends UnitContainerTestCase {
                     .greaterEqual(colCB -> colCB.specify().specifyMember().columnFormalizedDatetime());
             // 購入日時 <= 正式会員日時 + 7日 (一週間以内)
             cb.columnQuery(colCB -> colCB.specify().columnPurchaseDatetime())
-                    .lessEqual(colCB -> colCB.specify().specifyMember().columnFormalizedDatetime())
-                    .convert(op -> op.addDay(7));
+                    .lessThan(colCB -> colCB.specify().specifyMember().columnFormalizedDatetime())
+                    // #1on1: もともとのたばたさんの実装、addDay(7)のみ (2026/06/24)
+                    //.convert(op -> op.addDay(7));
+                    .convert(op -> op.addDay(8).truncTime());
 
             cb.query().addOrderBy_PurchaseDatetime_Asc();
             cb.query().addOrderBy_PurchaseId_Asc();
@@ -423,6 +452,7 @@ public class HandsOn03Test extends UnitContainerTestCase {
 
             assertNotNull(upperCategoryName);
 
+            // TODO tabata addDay(8).truncTime()に変わったのでアサートも追従で(今落ちる) by jflute (2026/06/24)
             LocalDateTime oneWeekLater = formalizedDatetime.plusWeeks(1);
             assertFalse(purchaseDatetime.isBefore(formalizedDatetime));
             // 正式会員日時 以降
