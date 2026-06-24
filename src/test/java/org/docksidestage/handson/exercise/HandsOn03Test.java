@@ -1,6 +1,7 @@
 package org.docksidestage.handson.exercise;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import org.dbflute.exception.NonSpecifiedColumnAccessException;
 import org.dbflute.optional.OptionalEntity;
 import org.docksidestage.handson.dbflute.exbhv.MemberBhv;
 import org.docksidestage.handson.dbflute.exentity.Member;
@@ -16,6 +18,8 @@ import org.docksidestage.handson.dbflute.exentity.MemberSecurity;
 import org.docksidestage.handson.dbflute.exentity.MemberStatus;
 import org.docksidestage.handson.dbflute.exbhv.MemberSecurityBhv;
 import org.docksidestage.handson.dbflute.exbhv.PurchaseBhv;
+import org.docksidestage.handson.dbflute.exentity.Product;
+import org.docksidestage.handson.dbflute.exentity.ProductCategory;
 import org.docksidestage.handson.dbflute.exentity.Purchase;
 import org.docksidestage.handson.unit.UnitContainerTestCase;
 
@@ -343,10 +347,87 @@ public class HandsOn03Test extends UnitContainerTestCase {
     
     public void test_member_formalized_from_20051001_to_20051003() throws Exception {
         // ## Arrange ##
-        
-        
+        String fromDate = "2005/10/01";
+        String toDate = "2005/10/03";
+        LocalDateTime fromDateTime = toLocalDateTime(fromDate);
+        LocalDateTime toDateTime = toLocalDateTime(toDate);
+
         // ## Act ##
-    
+        List<Member> memberList = memberBhv.selectList(cb -> {
+            cb.setupSelect_MemberStatus();
+            cb.specify().specifyMemberStatus().columnMemberStatusName();
+            cb.query().setMemberName_LikeSearch("vi", op -> op.likeContain());
+            cb.query().setFormalizedDatetime_FromTo(fromDateTime, toDateTime, op -> op.compareAsDate());
+            cb.query().addOrderBy_FormalizedDatetime_Asc();
+            cb.query().addOrderBy_MemberId_Asc();
+        });
+
         // ## Assert ##
+        assertHasAnyElement(memberList);
+        memberList.forEach(member -> {
+            MemberStatus status = member.getMemberStatus().get();
+            String memberName = member.getMemberName();
+            LocalDateTime formalizedDatetime = member.getFormalizedDatetime();
+            String memberStatusName = status.getMemberStatusName();
+            log("memberName={}, formalizedDatetime={}, memberStatusName={}", memberName, formalizedDatetime, memberStatusName);
+
+            assertContains(memberName, "vi");
+
+            assertNotNull(status.getMemberStatusCode());
+            assertNotNull(status.getMemberStatusName());
+            assertException(NonSpecifiedColumnAccessException.class, () -> status.getDescription());
+            assertException(NonSpecifiedColumnAccessException.class, () -> status.getDisplayOrder());
+
+            LocalDate formalizedDate = formalizedDatetime.toLocalDate();
+            assertFalse(formalizedDate.isBefore(fromDateTime.toLocalDate()));
+            assertFalse(formalizedDate.isAfter(toDateTime.toLocalDate()));
+        });
+    }
+    
+    public void test_purchase_within_one_week_after_formalized() throws Exception {
+        // ## Arrange ##
+
+        // ## Act ##
+        List<Purchase> purchaseList = purchaseBhv.selectList(cb -> {
+            cb.setupSelect_Member().withMemberStatus();
+            cb.setupSelect_Member().withMemberSecurityAsOne();
+            cb.setupSelect_Product().withProductStatus();
+            cb.setupSelect_Product().withProductCategory().withProductCategorySelf();
+
+            // 正式会員になってから一週間以内の購入
+            // 購入日時 >= 正式会員日時 (なってから)
+            cb.columnQuery(colCB -> colCB.specify().columnPurchaseDatetime())
+                    .greaterEqual(colCB -> colCB.specify().specifyMember().columnFormalizedDatetime());
+            // 購入日時 <= 正式会員日時 + 7日 (一週間以内)
+            cb.columnQuery(colCB -> colCB.specify().columnPurchaseDatetime())
+                    .lessEqual(colCB -> colCB.specify().specifyMember().columnFormalizedDatetime())
+                    .convert(op -> op.addDay(7));
+
+            cb.query().addOrderBy_PurchaseDatetime_Asc();
+            cb.query().addOrderBy_PurchaseId_Asc();
+        });
+
+        // ## Assert ##
+        assertHasAnyElement(purchaseList);
+        purchaseList.forEach(purchase -> {
+            Member member = purchase.getMember().get();
+            Product product = purchase.getProduct().get();
+            ProductCategory category = product.getProductCategory().get();
+            ProductCategory upperCategory = category.getProductCategorySelf().get();
+            String upperCategoryName = upperCategory.getProductCategoryName();
+
+            LocalDateTime purchaseDatetime = purchase.getPurchaseDatetime();
+            LocalDateTime formalizedDatetime = member.getFormalizedDatetime();
+            log("purchaseDatetime={}, formalizedDatetime={}, upperCategoryName={}",
+                    purchaseDatetime, formalizedDatetime, upperCategoryName);
+
+            assertNotNull(upperCategoryName);
+
+            LocalDateTime oneWeekLater = formalizedDatetime.plusWeeks(1);
+            assertFalse(purchaseDatetime.isBefore(formalizedDatetime));
+            // 正式会員日時 以降
+            assertFalse(purchaseDatetime.isAfter(oneWeekLater));
+            // 一週間後 以内
+        });
     }
 }
